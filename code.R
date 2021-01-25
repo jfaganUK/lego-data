@@ -1,9 +1,9 @@
-setwd("~/Developer/lego-data")
+# setwd("~/Developer/lego-data")
 
 library(ggplot2)
-library(gridExtra)
 library(ggthemes)
 library(png)
+library(gridExtra)
 library(grid)
 library(cowplot)
 
@@ -293,6 +293,10 @@ plot_one_by_theme = function (input_theme_name) {
     )
 }
 
+# we want to use this data for some other visualization idioms
+write.csv(num_sets_for_theme, "num_sets_in_theme.csv")
+write.csv(agg_theme_color_parts_count, "agg_theme_color_parts_count.csv")
+
 logo_img = readPNG("lego.png")
 logo_grob = rasterGrob(logo_img, width = unit(1, "in"))
 
@@ -431,6 +435,9 @@ plot_one_by_year = function (year_input) {
       )
   }
 }
+
+write.csv(num_sets_for_year, "num_sets_for_year.csv")
+write.csv(agg_year_color_parts_count, "agg_year_color_parts_count.csv")
 
 plots = lapply(min(num_sets_for_year$year):max(num_sets_for_year$year), plot_one_by_year)
 
