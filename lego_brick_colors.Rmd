@@ -1,0 +1,66 @@
+---
+title: "Lego Brick Colors"
+author: "Jesse Fagan"
+date: "24/01/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+```
+
+# Lego Colors by Year
+
+Load the data
+
+```{r}
+agg_year_color_parts_count <- 
+  read_csv('./agg_year_color_parts_count.csv') %>% 
+  select(-X1)
+```
+
+```{r}
+agg_year_color_parts_count %>% 
+  group_by(rgb) %>% 
+  summarize(total_count = sum(count)) %>% 
+  arrange(desc(total_count))
+```
+
+Plot a single color over time.
+
+```{r}
+# part_rgb <- "05131D"
+part_rgb <- "A0A5A9"
+agg_year_color_parts_count %>% 
+  filter(rgb == part_rgb) %>%
+  filter(year != 2021) %>% 
+  ggplot(aes(x = year, y = count)) +
+  geom_line(color = paste0("#",part_rgb), size = 3)
+```
+
+Plot all the color
+
+```{r}
+agg_year_color_parts_count %>% 
+  group_by(rgb) %>% 
+  summarize(total_count = sum(count)) %>% 
+  arrange(desc(total_count)) %>% 
+  top_n(10) %>% 
+  pull(rgb) ->
+  top_colors
+```
+
+```{r}
+agg_year_color_parts_count %>% 
+  filter(rgb %in% top_colors) %>%
+  filter(year != 2021) %>% 
+  mutate(rgb = factor(rgb, levels = top_colors)) %>% 
+  ggplot(aes(x = year, y = count, group = rgb, color = rgb)) +
+  geom_line(size = 1) +
+  geom_point() +
+  scale_color_manual(values = paste0("#", top_colors))
+```
+
+
+
+
