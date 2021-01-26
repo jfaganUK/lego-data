@@ -7,6 +7,7 @@ output: html_document
 
 ```{r setup, include=FALSE}
 library(tidyverse)
+library(ggthemes)
 ```
 
 ## Notes
@@ -164,25 +165,30 @@ agg_year_color_parts_count %>%
   summarize(total_count = sum(count)) %>% 
   arrange(desc(total_count)) %>% 
   pull(rgb) -> color_order
-agg_year_color_parts_count %>% 
+d <- agg_year_color_parts_count %>% 
   filter(year != 2021, year >= 1960) %>% 
   mutate(rgb = factor(rgb, levels = color_order)) %>% 
   group_by(year) %>% 
   arrange(year,desc(count)) %>% 
-  # mutate(m_count = mean(count)) %>%
-  # mutate(m_count = sum(count) / 2) %>% 
-  # mutate(m_count = mean(count) * 4) %>%
   mutate(m_count = cumsum(count) / sum(count)) %>% 
   ungroup() %>% 
-  # mutate(count = ifelse(count < m_count, -count, count)) -> d
-  mutate(count = ifelse(m_count > 0.65, -count, count)) %>% 
-  mutate(count = log(abs(count))) -> d
-ggplot(d, aes(x = year, y = count, alluvium = rgb, fill = rgb, color = rgb)) +
-  geom_alluvium(decreasing = FALSE, alpha = 0.8) +
+  mutate(count = ifelse(m_count > 0.65, -count, count))
+g <- ggplot(d) +
+  geom_alluvium(decreasing = FALSE, alpha = 0.8, 
+                aes(x = year, y = count, alluvium = rgb, fill = rgb, color = rgb)) +
+  geom_text(data = tibble(yr = seq(1960,2020, by = 20)), y = 0, 
+            aes(x = yr, label = yr),
+            family = "Oswald", hjust = "left") + 
   scale_fill_manual(values = paste0("#", color_order)) +
   scale_color_manual(values = paste0("#", color_order)) +
+  theme_void() +
   theme(legend.position = "none")
 ```
+
+```{r}
+ggsave(plot = g, filename = "lego_streamgraph.svg")
+```
+
 
 
 
