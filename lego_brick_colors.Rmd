@@ -148,6 +148,7 @@ agg_year_color_parts_count %>%
   # mutate(m_count = sum(count) / 2) %>% 
   # mutate(m_count = mean(count) * 4) %>%
   mutate(m_count = cumsum(count) / sum(count)) %>% 
+  mutate(count = scales::rescale(count,c(5, 50))) %>% 
   ungroup() %>% 
   # mutate(count = ifelse(count < m_count, -count, count)) -> d
   mutate(count = ifelse(m_count > 0.65, -count, count)) -> d
@@ -158,8 +159,12 @@ ggplot(d, aes(x = year, y = count, alluvium = rgb, fill = rgb, color = rgb)) +
   theme(legend.position = "none")
 ```
 
+Normalize by sets.
+
 
 ```{r}
+num_sets_by_year <- read_csv('num_sets_for_year.csv') %>% 
+  select(-X1, num_sets = x)
 agg_year_color_parts_count %>% 
   group_by(rgb) %>% 
   summarize(total_count = sum(count)) %>% 
@@ -168,26 +173,91 @@ agg_year_color_parts_count %>%
 d <- agg_year_color_parts_count %>% 
   filter(year != 2021, year >= 1960) %>% 
   mutate(rgb = factor(rgb, levels = color_order)) %>% 
+  left_join(num_sets_by_year, by = 'year') %>% 
   group_by(year) %>% 
   arrange(year,desc(count)) %>% 
   mutate(m_count = cumsum(count) / sum(count)) %>% 
+  mutate(count = count / num_sets) %>% 
   ungroup() %>% 
   mutate(count = ifelse(m_count > 0.65, -count, count))
-g <- ggplot(d) +
+ggplot(d) +
   geom_alluvium(decreasing = FALSE, alpha = 0.8, 
                 aes(x = year, y = count, alluvium = rgb, fill = rgb, color = rgb)) +
-  geom_text(data = tibble(yr = seq(1960,2020, by = 20)), y = 0, 
+  geom_text(data = tibble(yr = seq(1960,2020, by = 10)), y = 0, 
             aes(x = yr, label = yr),
             family = "Oswald", hjust = "left") + 
   scale_fill_manual(values = paste0("#", color_order)) +
   scale_color_manual(values = paste0("#", color_order)) +
   theme_void() +
-  theme(legend.position = "none")
+  theme(legend.position = "none", plot.background = element_rect(fill = "pink"))
 ```
 
 ```{r}
-ggsave(plot = g, filename = "lego_streamgraph.svg")
+ggsave(filename = "lego_streamgraph.svg",
+       width = 32, height = 9)
 ```
+
+
+Details for the notes.
+
+```{r}
+agg_year_color_parts_count %>% 
+  filter(year == 2020) %>% 
+  pull(count) %>% 
+  sum
+agg_year_color_parts_count %>% 
+  filter(year == 2020) %>% 
+  arrange(desc(count)) %>% 
+  mutate(p = count / sum(count))
+```
+
+What's going on with 1963
+
+```{r}
+
+sets <- read_csv("sets.csv")
+inventories <- read_csv("inventories.csv")
+inventory_parts <- read_csv("inventory_parts.csv")
+parts <- read_csv("parts.csv")
+colors <- read_csv("colors.csv")
+
+sets2 <- left_join(inventories, inventory_parts, by = c("id" = "inventory_id")) %>% 
+  left_join(sets, by = c("set_num"))
+
+sets2 %>% 
+  filter(year == 1963) %>% 
+  distinct(set_num, color_id) %>% 
+  count(set_num) %>% 
+  top_n(3)
+  
+sets %>% 
+  filter(set_num == "LEGO-Modulex-1")
+```
+
+Here is the reason:
+https://www.newelementary.com/2017/11/old-bricks-what-are-modulex-lego.html
+https://rebrickable.com/blog/211/modulex-a-bit-of-history/
+
+
+```{r}
+num_sets_by_year <- read_csv('num_sets_for_year.csv') %>% 
+  select(-X1, num_sets = x)
+ggplot(num_sets_by_year, aes(x = year, y = num_sets)) +
+  geom_line()
+```
+
+
+```{r}
+sets2 %>% 
+  filter(year == 2001) %>% 
+  distinct(set_num, num_parts) %>% 
+  arrange(desc(num_parts))
+  
+sets %>% 
+  filter(set_num == "045-1")
+```
+
+
 
 
 
