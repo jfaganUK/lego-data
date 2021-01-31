@@ -3,6 +3,8 @@ title: "Lego Brick Colors"
 author: "Jesse Fagan"
 date: "24/01/2021"
 output: html_document
+editor_options: 
+  chunk_output_type: console
 ---
 
 ```{r setup, include=FALSE}
@@ -255,6 +257,14 @@ sets2 %>%
   
 sets %>% 
   filter(set_num == "045-1")
+
+
+sets %>% 
+  filter(year == 1960) %>% 
+  summarize(s = sum(num_parts))
+
+sets2 %>% 
+  filter(year == 1960)
 ```
 
 
